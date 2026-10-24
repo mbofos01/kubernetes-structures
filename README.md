@@ -6,46 +6,79 @@
 - `kind` installed
 - `kubectl` installed
 
-## Step 1: Build the Docker image
+## Quick Start with Deploy Script
+
+The easiest way to deploy is to use the automated `deploy.ps1` script.
+
+### Basic Deployment
 
 ```powershell
-cd simple-api
-docker build -t simple-api:dev .
+.\deploy.ps1
 ```
 
-## Step 2: Create the kind cluster
+This will automatically:
+- Build the Docker image
+- Create a kind cluster
+- Load the image into the cluster
+- Deploy all manifests
+- Verify the deployment is running
+
+### Deploy Script Usage
 
 ```powershell
-cd ..
-kind create cluster --name demo --config kind-config.yaml
+# Full deployment (default)
+.\deploy.ps1
+
+# Check deployment status
+.\deploy.ps1 -Action status
+
+# View pod logs
+.\deploy.ps1 -Action logs
+
+# Restart the deployment
+.\deploy.ps1 -Action restart
+
+# Delete the cluster and cleanup
+.\deploy.ps1 -Action clean
+
+# Custom cluster name
+.\deploy.ps1 -ClusterName my-cluster
+
+# Verbose output for debugging
+.\deploy.ps1 -Verbose
+
+# Get help
+.\deploy.ps1 -Help
 ```
 
-## Step 3: Load the image into kind
+### Accessing the API
+
+After deployment, you have two options to access your services:
+
+**Option 1: NodePort (Direct access)**
+- **API Endpoint**: http://localhost:30008/info
+- **Interactive Docs**: http://localhost:30008/docs
+- **ReDoc**: http://localhost:30008/redoc
+
+**Option 2: Port Forwarding (Local 8080)**
+
+If you prefer to use port 8080 locally, set up port forwarding:
 
 ```powershell
-kind load docker-image simple-api:dev --name demo
+kubectl port-forward svc/simple-api 8080:80
 ```
 
-## Step 4: Deploy to Kubernetes
+Then access at:
+- **API Endpoint**: http://localhost:8080/info
+- **Interactive Docs**: http://localhost:8080/docs
+- **ReDoc**: http://localhost:8080/redoc
+
+### Test the API
 
 ```powershell
-kubectl apply -f k8s-deploy.yaml
-```
+# Using NodePort
+curl http://localhost:30008/info
 
-## Step 5: Check deployment status
-
-```powershell
-kubectl rollout status deployment/simple-api
-```
-
-## Step 6: Test the API
-
-```powershell
+# Or using port-forward (after running the command above)
 curl http://localhost:8080/info
-```
-
-## Cleanup
-
-```powershell
-kind delete cluster --name demo
 ```
